@@ -1,4 +1,4 @@
-from tmdbv3api import TMDb, Movie, TV, Season
+from tmdbv3api import TMDb, Movie, TV, Season, Trending
 from typing import List, Optional, Dict, Any
 
 
@@ -12,6 +12,7 @@ class TMDBClient:
         self.movie_api = Movie()
         self.tv_api = TV()
         self.season_api = Season()
+        self.trending_api = Trending()
 
     def search_movies(self, query: str) -> List[Dict[str, Any]]:
         results = self.movie_api.search(query)
@@ -34,6 +35,22 @@ class TMDBClient:
             }
         except Exception:
             return None
+        
+    def get_trending_movies(self, time_window: str = "day") -> List[Dict[str, Any]]:
+        try:
+            results = getattr(self.trending_api, f"movie_{time_window}")()
+            return [self._format_movie_result(movie) for movie in results['results']]
+        except Exception as e:
+            print(f"Error fetching trending movies: {e}")
+            return []
+        
+    def get_trending_tvshows(self, time_window: str = "day"):
+        try:
+            results = getattr(self.trending_api, f"tv_{time_window}")()
+            return [self._format_tv_result(tvshow) for tvshow in results['results']]
+        except Exception as e:
+            print(f"Error fetching trending tvshows: {e}")
+            return []
         
     def search_tv_shows(self, query: str) -> List[Dict[str, Any]]:
         results = self.tv_api.search(query)

@@ -17,8 +17,32 @@
 {% endblock extraheads %}
 
 {% block content %}
+    <!-- Trending Movie Sections -->
+    <section class="pt-8 px-6 mt-16">
+        <h3 class="text-2xl font-bold mb-4">Films en tendance</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {% for movie in trending_movies %}
+                {% include "widgets/movie_card.html" %}
+            {% empty %}
+                <p>Aucun film en tendance</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Trending TVShow Sections -->
+     <section class="py-8 px-6">
+        <h3 class="text-2xl font-bold mb-4">Séries en tendance</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {% for tv_show in trending_tvshows %}
+                {% include "widgets/tv_show_card.html" %}
+            {% empty %}
+                <p>Aucune série en tendance</p>
+            {% endfor %}
+        </div>
+    </section>
+
     <!-- Movie Sections -->
-    <section class="pt-8 px-6 mt-12">
+    <section class="pt-8 px-6">
         <h3 class="text-2xl font-bold mb-4">Films ajoutés récemment</h3>
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {% for movie in last_movies %}
