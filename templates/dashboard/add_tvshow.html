@@ -1,0 +1,134 @@
+{% extends 'dashboard/index.html' %}
+
+{% block title %}Ajouter Série{% endblock title %}
+
+{% block extraheads %}
+    {{ block.super }}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const tvshowNameInput = document.getElementById("tvshowName");
+            const suggestionsList = document.getElementById("tvshowSuggestions");
+
+            let debounceTimeout = null;
+
+            function setFormForSelectedTVShow(tvshowID) {
+                const retrieveURL = `/tmdb/tvshows/retrieve/${tvshowID}`;
+                fetch(retrieveURL)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error("Erreur réseau");
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log(data);
+                        const posterPath = `https://image.tmdb.org/t/p/w500${data.poster_path}`;
+                        document.getElementById("tmdbID").value = tvshowID;
+                        document.getElementById("tvshowPoster").src = posterPath;
+                        document.getElementById("tvshowPosterPath").value = posterPath;
+                        document.getElementById("tvshowOverview").value = data.overview;
+                        document.getElementById("tvshowReleaseDate").value = data.first_air_date;
+
+                        document.getElementById("tvshowContainer").classList.remove("hidden");
+                    })
+                    .catch(error => {
+                        console.error("Erreur de récupération de la série :", error);
+                    });
+            }
+
+            tvshowNameInput.addEventListener("input", () => {
+                const query = tvshowNameInput.value.trim();
+                clearTimeout(debounceTimeout);
+
+                if (query.length < 2) {
+                    suggestionsList.innerHTML = "";
+                    return;
+                }
+
+                debounceTimeout = setTimeout(() => {
+                    fetch(`/tmdb/tvshows/search/?q=${encodeURIComponent(query)}`)
+                        .then(response => {
+                            if (!response.ok) throw new Error("Erreur réseau");
+                            return response.json()
+                        })
+                        .then(data => {
+                            suggestionsList.innerHTML = "";
+                            data.forEach(tvshow => {
+                                const item = document.createElement("li");
+                                item.className = "flex items-center gap-4 p-2 hover:bg-gray-700 cursor-pointer";
+                                
+                                const img = document.createElement("img");
+                                img.src = tvshow.poster_path
+                                    ? `https://image.tmdb.org/t/p/w92${tvshow.poster_path}`
+                                    : "https://via.placeholder.com/92x138?text=No+Image";
+                                img.alt = tvshow.name;
+                                img.className = "w-12 h-auto rounded";
+
+                                const text = document.createElement("span");
+                                text.textContent = tvshow.name + (tvshow.first_air_date ? ` (${tvshow.first_air_date})` : "");
+
+                                item.appendChild(img);
+                                item.appendChild(text);
+
+                                item.addEventListener("click", () => {
+                                    tvshowNameInput.value = tvshow.name;
+                                    suggestionsList.innerHTML = "";
+                                    const tvshowID = tvshow.id;
+                                    setFormForSelectedTVShow(tvshowID);
+                                });
+
+                                suggestionsList.appendChild(item);
+                            });
+                        })
+                        .catch(error => {
+                            console.error("Erreur de récupération des séries :", error);
+                        })
+                });
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!suggestionsList.contains(e.target) && e.target !== tvshowNameInput) {
+                    suggestionsList.innerHTML = "";
+                }
+            });
+        });
+    </script>
+{% endblock extraheads %}
+
+{% block content %}
+    {{ block.super }}
+
+    <form method="POST" class="w-full p-4 text-lg">
+        {% csrf_token %}
+        <div class="relative w-full">
+            <input type="hidden" id="tmdbID" name="tmdbID" />
+            <label for="tvshowName" class="p-2 block">Nom de la série</label>
+            <input type="text" id="tvshowName" name="tvshowName" placeholder="Nom de la série"
+                class="p-2 bg-gray-900 rounded-lg w-full" autocomplete="off" />
+
+            <ul id="tvshowSuggestions"
+                class="absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-50 max-h-64 overflow-y-auto">
+            </ul>
+        </div>
+
+        <div id="tvshowContainer" class="w-full mt-4 hidden">
+            <div class="flex justify-center space-x-4">
+                <div class="flex-1 flex items-center justify-center">
+                    <img src="" id="tvshowPoster" class="" />
+                    <input type="hidden" id="tvshowPosterPath" name="tvshowPosterPath" value="" />
+                </div>
+                <div class="flex-1">
+                    <label for="tvshowOverview">Résumé</label>
+                    <textarea rows="4" id="tvshowOverview" name="tvshowOverview" class="w-full bg-gray-900 text-white p-2 rounded-lg"></textarea>
+
+                    <label for="tvshowReleaseDate">Date de sortie initiale</label>
+                    <input type="date" id="tvshowReleaseDate" name="tvshowReleaseDate" class="w-full bg-gray-900 text-white p-2 rounded-lg" /> 
+                </div>
+            </div>
+            <div class="flex items-center justify-center w-full mt-4">
+                <button type="submit" class="p-2 border border-white rounded-lg w-1/2">Ajouter</button>
+            </div>
+        </div>
+    </form>
+{% endblock content %}

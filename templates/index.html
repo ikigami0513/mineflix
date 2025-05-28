@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}Accueil{% endblock title %}
+
+{% block extraheads %}
+    <script src="{% static 'javascript/card_modal.js' %}"></script>
+    <script src="{% static 'javascript/movie_modal.js' %}"></script>
+    <script src="{% static 'javascript/tvshow_modal.js' %}"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            setupCardModalEventListener();
+            setupMovieModalEventListener();
+            setupTVShowModalEventListener();
+        });
+    </script>
+{% endblock extraheads %}
+
+{% block content %}
+    <!-- Movie Sections -->
+    <section class="pt-8 px-6 mt-12">
+        <h3 class="text-2xl font-bold mb-4">Films ajoutés récemment</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {% for movie in last_movies %}
+                {% include "widgets/movie_card.html" %}
+            {% empty %}
+                <p>Aucun film disponible</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- TV Show Sections -->
+    <section class="py-8 px-6">
+        <h3 class="text-2xl font-bold mb-4">Saisons ajoutées récemment</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {% for season in last_season %}
+                {% with tv_show=season.tv_show %}
+                    {% include "widgets/tv_show_card.html" %}
+                {% endwith %}
+            {% endfor %}
+        </div>
+    </section>
+
+    {% include "widgets/movie_modal.html" %}
+    {% include "widgets/tv_show_modal.html" %}
+{% endblock content %}

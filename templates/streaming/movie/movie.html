@@ -1,0 +1,72 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{ movie.title }} | Mineflix</title>
+        <link href="{% static 'tailwind/tailwind.css' %}" rel="stylesheet" />
+        <link href="{% static 'videojs/videojs.css' %}" rel="stylesheet" />
+    </head>
+    <body class="m-0 p-0 h-screen w-screen overflow-hidden flex justify-center items-center relative bg-black">
+        <video
+            id="movie"
+            class="video-js w-screen h-screen"
+            controls
+            preload="auto"
+            data-setup="{}"
+            {% if movie.thumbnail %}
+                poster="{{ movie.thumbnail.url }}"
+            {% endif %}
+        >
+            <source src="{{ movie.video.url }}" type="video/mp4" />
+            <p class="vjs-no-js">
+                Pour visionner cette vidéo, veuillez activer JavaScript et envisager de passer à un navigateur Web 
+                prenant en
+                <a href="https://videojs.com/html5-video-support/" target="_blank">charge les vidéos HTML5.</a>
+            </p>
+        </video>
+
+        <!-- Titre en overlay -->
+        <div 
+            id="title-overlay" 
+            class="absolute top-4 left-4 text-white font-bold text-xl drop-shadow-lg transition-opacity duration-300 pointer-events-none opacity-100"
+        >
+            <span>{{ movie.title }}</span>
+        </div>
+
+        <script src="{% static 'videojs/videojs.js' %}"></script>
+        <script>
+            (function() {
+                const titleOverlay = document.getElementById('title-overlay');
+                let timeoutId;
+
+                function showTitle() {
+                    titleOverlay.classList.remove('opacity-0');
+                    titleOverlay.classList.add('opacity-100');
+                    resetTimeout();
+                }
+
+                function hideTitle() {
+                    titleOverlay.classList.remove('opacity-100');
+                    titleOverlay.classList.add('opacity-0');
+                }
+
+                function resetTimeout() {
+                    if (timeoutId) {
+                        clearTimeout(timeoutId);
+                    }
+                    timeoutId = setTimeout(hideTitle, 2000);
+                }
+
+                // Écoute le mouvement de la souris sur le body
+                document.body.addEventListener('mousemove', () => {
+                    showTitle();
+                });
+
+                // Masquer après 2 secondes au départ si pas de mouvement
+                resetTimeout();
+            })();
+        </script>
+    </body>
+</html>

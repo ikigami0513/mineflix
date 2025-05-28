@@ -1,0 +1,20 @@
+{% load static %}
+<div 
+    class="
+        card relative bg-gray-800 rounded overflow-hidden group shadow-md hover:shadow-xl transition-shadow
+        transform duration-300 hover:scale-110 hover:z-10
+    "
+    data-type="movie"
+    data-id="{{ movie.id }}"
+>
+    {% if movie.poster %}
+        <img src="{{ movie.poster.url }}" alt="{{ movie.title }}" class="w-full h-auto object-cover" />
+    {% else %}
+        <img src="{% static 'poster_placeholder.jpg' %}" alt="{{ movie.title }}" class="w-full h-auto object-cover" />
+    {% endif %}
+
+    <!-- Overlay infos -->
+    <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 p-2">
+        <h4 class="text-sm font-semibold truncate">{{ movie.title }}</h4>
+    </div>
+</div>

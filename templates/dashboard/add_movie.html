@@ -1,0 +1,189 @@
+{% extends 'dashboard/index.html' %}
+
+{% block title %}Ajouter Film{% endblock title %}
+
+{% block extraheads %}
+{{ block.super }}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const movieNameInput = document.getElementById("movieName");
+        const suggestionsList = document.getElementById("movieSuggestions");
+
+        let debounceTimeout = null;
+
+        function setFormForSelectedMovie(movieID) {
+            const retrieveURL = `/tmdb/movies/retrieve/${movieID}`;
+            fetch(retrieveURL)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Erreur réseau");
+                        return response.json();
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const posterPath = `https://image.tmdb.org/t/p/w500${data.poster_path}`;
+                    document.getElementById("tmdbID").value = movieID;
+                    document.getElementById("moviePoster").src = posterPath;
+                    document.getElementById("moviePosterPath").value = posterPath;
+                    document.getElementById("movieOverview").value = data.overview;
+                    document.getElementById("movieReleaseDate").value = data.release_date;
+
+
+                    if (data.backdrops.length !== 0) {
+                        document.getElementById("movieThumbnailContainer").classList.remove("hidden");
+                        const movieSelectedThumbnail = document.getElementById("movieSelectedThumbnail");
+                        const movieThumbnail = document.getElementById("movieThumbnail");
+                        movieThumbnail.src = data.backdrops[0];
+                        movieSelectedThumbnail.value = movieThumbnail.src;
+
+                        const movieThumbnails = document.getElementById("movieThumbnails");
+                        data.backdrops.forEach(backdrop => {
+                            const item = document.createElement("li");
+                            item.className = "thumbnail flex items-center justify-center gap-4 p-2 hover:bg-gray-700 cursor-pointer";
+
+                            const img = document.createElement("img");
+                            img.src = backdrop
+                            img.className = "w-1/2 h-auto rounded";
+
+                            if (img.src === movieThumbnail.src) {
+                                item.classList.add("bg-gray-700");
+                            }
+
+                            item.appendChild(img);
+
+                            item.addEventListener("click", () => {
+                                movieThumbnail.src = img.src;
+                                movieSelectedThumbnail.value = movieThumbnail.src;
+                                document.querySelectorAll(".thumbnail").forEach(thumbnail => {
+                                    thumbnail.classList.remove("bg-gray-700");
+                                })
+                                item.classList.add("bg-gray-700");
+                            });
+
+                            movieThumbnails.appendChild(item);
+                        });
+                    }
+
+                    document.getElementById("movieContainer").classList.remove("hidden");
+                    if (data.backdrops.length === 0) {
+                        document.getElementById("movieThumbnailContainer").classList.add("hidden");
+                    }
+                })
+                .catch(error => {
+                    console.error("Erreur de récupération du film :", error);
+                });
+        }
+
+        movieNameInput.addEventListener("input", () => {
+            const query = movieNameInput.value.trim();
+            clearTimeout(debounceTimeout);
+
+            if (query.length < 2) {
+                suggestionsList.innerHTML = "";
+                return;
+            }
+
+            debounceTimeout = setTimeout(() => {
+                fetch(`/tmdb/movies/search/?q=${encodeURIComponent(query)}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error("Erreur réseau");
+                        return response.json();
+                    })
+                    .then(data => {
+                        suggestionsList.innerHTML = "";
+                        data.forEach(movie => {
+                            const item = document.createElement("li");
+                            item.className = "flex items-center gap-4 p-2 hover:bg-gray-700 cursor-pointer";
+
+                            const img = document.createElement("img");
+                            img.src = movie.poster_path
+                                ? `https://image.tmdb.org/t/p/w92${movie.poster_path}`
+                                : "https://via.placeholder.com/92x138?text=No+Image";
+                            img.alt = movie.title;
+                            img.className = "w-12 h-auto rounded";
+
+                            const text = document.createElement("span");
+                            text.textContent = movie.title + (movie.release_date ? ` (${movie.release_date})` : "");
+
+                            item.appendChild(img);
+                            item.appendChild(text);
+
+                            item.addEventListener("click", () => {
+                                movieNameInput.value = movie.title;
+                                suggestionsList.innerHTML = "";
+                                const movieID = movie.id;
+                                setFormForSelectedMovie(movieID);
+                            });
+
+                            suggestionsList.appendChild(item);
+                        });
+                    })
+                    .catch(error => {
+                        console.error("Erreur de récupération des films :", error);
+                    });
+            }, 300);
+        });
+
+        // Masquer les suggestions si clic en dehors
+        document.addEventListener("click", (e) => {
+            if (!suggestionsList.contains(e.target) && e.target !== movieNameInput) {
+                suggestionsList.innerHTML = "";
+            }
+        });
+    });
+</script>
+{% endblock extraheads %}
+
+{% block content %}
+    {{ block.super }}
+
+    <form method="POST" enctype="multipart/form-data" class="w-full p-4 text-lg">
+        {% csrf_token %}
+        <div class="relative w-full">
+            <input type="hidden" id="tmdbID" name="tmdbID" />
+            <label for="movieName" class="p-2 block">Titre du film</label>
+            <input type="text" id="movieName" name="movieName" placeholder="Titre du film"
+                   class="p-2 bg-gray-900 rounded-lg w-full" autocomplete="off" />
+
+            <ul id="movieSuggestions"
+                class="absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-50 max-h-64 overflow-y-auto">
+            </ul>
+        </div>
+
+        <div id="movieContainer" class="w-full mt-4 hidden">
+            <div class="flex justify-center space-x-4">
+                <div class="flex-1 flex items-center justify-center">
+                    <img src="" id="moviePoster" class="" />
+                    <input type="hidden" id="moviePosterPath" name="moviePosterPath" value="" />
+                </div>
+                <div class="flex-1">
+                    <label for="movieOverview">Résumé</label>
+                    <textarea rows="4" id="movieOverview" name="movieOverview" class="w-full bg-gray-900 text-white p-2 rounded-lg"></textarea>
+
+                    <label for="movieReleaseDate">Date de sortie</label>
+                    <input type="date" id="movieReleaseDate" name="movieReleaseDate" class="w-full bg-gray-900 text-white p-2 rounded-lg" />
+
+                    <label for="movieVideo">Vidéo</label>
+                    <input type="file" id="movieVideo" name="movieVideo" class="w-full bg-gray-900 text-white p-2 rounded-lg" />
+                </div>
+            </div>
+            <div class="w-full" id="movieThumbnailContainer">
+                <label for="movieThumbnail" class="p-2 block">Miniature</label>
+                <div class="flex w-full justify-center items-center space-x-4 h-96">
+                    <img src="" id="movieThumbnail" class="h-full object-contain rounded" />
+
+                    <input type="hidden" value="" id="movieSelectedThumbnail" name="movieSelectedThumbnail" />
+
+                    <ul id="movieThumbnails"
+                        class="h-full overflow-y-auto bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-50 space-y-2 p-2">
+                    </ul>
+                </div>
+            </div>
+            <div class="flex items-center justify-center w-full mt-4">
+                <button type="submit" class="p-2 border border-white rounded-lg w-1/2">Ajouter</button>
+            </div>
+        </div>
+    </form>
+{% endblock content %}

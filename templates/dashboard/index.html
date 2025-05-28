@@ -1,0 +1,26 @@
+{% extends 'layout.html' %}
+
+{% block title %}Dashboard{% endblock title %}
+
+{% block extraheads %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const dashboardMenuLinks = document.querySelectorAll(".dashboard-menu-link");
+
+        dashboardMenuLinks.forEach(menuLink => {
+            if (menuLink.href === window.location.href) {
+                menuLink.classList.add("border", "border-white", "rounded-lg");
+            }
+        })
+    })
+</script>
+{% endblock extraheads %}
+
+{% block content %}
+    <div class="w-full p-2 mt-20 border-t border-white bg-gray-900 flex items-center justify-center space-x-4">
+        <a href="{% url 'add_movie_dashboard_view' %}" class="dashboard-menu-link hover:text-gray-300 p-2 flex-1 text-center">Film</a>
+        <a href="{% url 'add_tvshow_dashboard_view' %}" class="dashboard-menu-link hover:text-gray-300 p-2 flex-1 text-center">Série</a>
+        <a href="{% url 'add_season_dashboard_view' %}" class="dashboard-menu-link hover:text-gray-300 p-2 flex-1 text-center">Saison</a>
+        <a href="{% url 'add_episode_dashboard_view' %}" class="dashboard-menu-link hover:text-gray-300 p-2 flex-1 text-center">Épisode</a>
+    </div>
+{% endblock content %}

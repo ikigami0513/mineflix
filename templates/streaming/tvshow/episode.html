@@ -1,0 +1,133 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>
+            {{ episode.season.tv_show.name }} 
+            Saison {{episode.season.season_number }}
+            Épisode {{ episode.episode_number }}
+            | Mineflix
+        </title>
+        <link href="{% static 'tailwind/tailwind.css' %}" rel="stylesheet" />
+        <link href="{% static 'videojs/videojs.css' %}" rel="stylesheet" />
+    </head>
+    <body class="m-0 p-0 h-screen w-screen overflow-hidden flex justify-center items-center relative bg-black">
+        <video
+            id="episode"
+            class="video-js w-screen h-screen"
+            controls
+            preload="auto"
+            data-setup="{}"
+            poster="{{ episode.thumbnail.url }}"
+        >
+            <source src="{{ episode.video.url }}" type="video/mp4" />
+            <p class="vjs-no-js">
+                Pour visionner cette vidéo, veuillez activer JavaScript et envisager de passer à un navigateur Web 
+                prenant en
+                <a href="https://videojs.com/html5-video-support/" target="_blank">charge les vidéos HTML5.</a>
+            </p>
+        </video>
+
+        <!-- Titre en overlay -->
+        <div 
+            id="title-overlay" 
+            class="absolute top-4 left-4 text-white font-bold text-xl drop-shadow-lg transition-opacity duration-300 pointer-events-none opacity-100"
+        >
+            <span>
+                {{ episode.season.tv_show.name }} 
+                Saison {{episode.season.season_number }}
+                Épisode {{ episode.episode_number }}
+            </span>
+        </div>
+
+        <div id="next-overlay" class="absolute bottom-4 right-4 hidden flex-col gap-2 items-end">
+            <div class="bg-black bg-opacity-80 text-white p-4 rounded-lg shadow-lg space-y-2">
+                <p class="text-sm font-medium">Voulez-vous passer à l'épisode suivant ?</p>
+                <div class="flex gap-2">
+                    {% if next_episode %}
+                        <a
+                            href="{% url 'episode_watch_view' episode_id=next_episode.id %}"
+                            class="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded"
+                        >
+                            Suivant
+                        </a>
+                    {% endif %}
+                    <button
+                        id="btn-cancel"
+                        class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-3 rounded"
+                    >
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script src="{% static 'videojs/videojs.js' %}"></script>
+        <script>
+            function timeStringToSeconds(timeStr) {
+                // timeStr est supposé être au format "HH:MM:SS"
+                const parts = timeStr.split(':');
+                const hours = parseInt(parts[0], 10);
+                const minutes = parseInt(parts[1], 10);
+                const seconds = parseInt(parts[2], 10);
+                return hours * 3600 + minutes * 60 + seconds;
+            }
+
+            (function() {
+                const player = videojs("episode");
+                const nextOverlay = document.getElementById("next-overlay");
+                const cancelButton = document.getElementById("btn-cancel");
+
+                let shown = false;
+                const creditsTime = timeStringToSeconds("{{ episode.credits_time|time:"H:i:s" }}");
+
+                player.on("timeupdate", function() {
+                    const duration = player.duration();
+                    const currentTime = player.currentTime();
+
+                    if (!shown && currentTime >= creditsTime) {
+                        shown = true;
+                        nextOverlay.classList.remove("hidden");
+                        nextOverlay.classList.add("flex");
+                    }
+                });
+
+                cancelButton.addEventListener("click", () => {
+                    nextOverlay.classList.add("hidden");
+                    nextOverlay.classList.remove("flex");
+                });
+
+                const titleOverlay = document.getElementById('title-overlay');
+                let timeoutId;
+
+                function showTitle() {
+                    titleOverlay.classList.remove('opacity-0');
+                    titleOverlay.classList.add('opacity-100');
+                    resetTimeout();
+                }
+
+                function hideTitle() {
+                    titleOverlay.classList.remove('opacity-100');
+                    titleOverlay.classList.add('opacity-0');
+                }
+
+                function resetTimeout() {
+                    if (timeoutId) {
+                        clearTimeout(timeoutId);
+                    }
+                    timeoutId = setTimeout(hideTitle, 2000);
+                }
+
+                // Écoute le mouvement de la souris sur le body
+                document.body.addEventListener('mousemove', () => {
+                    showTitle();
+                });
+
+                // Masquer après 2 secondes au départ si pas de mouvement
+                resetTimeout();
+            })();
+        </script>
+    </body>
+</html>

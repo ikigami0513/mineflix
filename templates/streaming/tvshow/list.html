@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}Séries{% endblock title %}
+
+{% block extraheads %}
+    <script src="{% static 'javascript/card_modal.js' %}"></script>
+    <script src="{% static 'javascript/tvshow_modal.js' %}"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            setupCardModalEventListener();
+            setupTVShowModalEventListener();
+        });
+    </script>
+{% endblock extraheads %}
+
+{% block content %}
+    <!-- Movie Sections -->
+    <section class="pt-8 px-6 mt-12">
+        <h3 class="text-2xl font-bold mb-4">Séries</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {% for tv_show in tvshows %}
+                {% include "widgets/tv_show_card.html" %}
+            {% empty %}
+                <p>Aucune série disponible</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% include "widgets/tv_show_modal.html" %}
+{% endblock content %}

@@ -1,0 +1,187 @@
+{% extends 'dashboard/index.html' %} 
+
+{% block title %}Ajouter Saison{% endblock title %}
+
+{% block extraheads %}
+    {{ block.super }}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const tvshowNameInput = document.getElementById("tvshowName");
+            const suggestionsList = document.getElementById("tvshowSuggestions");
+            const seasonSuggestionsList = document.getElementById("seasonSuggestions");
+
+            let debounceTimeout = null;
+
+            function setupSeasonChoice(tmdb_id) {
+                fetch(`/tmdb/tvshows/retrieve/${tmdb_id}/`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error("Erreur réseau");
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        seasonSuggestionsList.innerHTML = "";
+                        data.seasons.forEach(season => {
+                            const item = document.createElement("li");
+                            item.className = "flex items-center gap-4 p-2 hover:bg-gray-700 cursor-pointer";
+
+                            const seasonName = `Saison ${season.season_number} - ${season.name}`
+
+                            const img = document.createElement("img");
+                            img.src = `https://image.tmdb.org/t/p/w500${season.poster_path}`;
+                            img.alt = seasonName;
+                            img.className = "w-12 h-auto rounded";
+
+                            const text = document.createElement("span");
+                            text.textContent = seasonName;
+
+                            item.appendChild(img);
+                            item.appendChild(text);
+
+                            item.addEventListener("click", () => {
+                                seasonSuggestionsList.classList.add("hidden");
+                                document.getElementById("seasonName").value = seasonName;
+
+                                document.getElementById("seasonNumber").value = season.season_number;
+                                document.getElementById("seasonNameForm").value = season.name;
+
+                                const posterPath = `https://image.tmdb.org/t/p/w500${season.poster_path}`;
+                                document.getElementById("seasonPoster").src = posterPath;
+                                document.getElementById("seasonPosterPath").value = posterPath;
+
+                                document.getElementById("seasonOverview").value = season.overview;
+                                document.getElementById("seasonReleaseDate").value = season.air_date;
+
+                                document.getElementById("seasonDataContainer").classList.remove("hidden");
+                            });
+
+                            seasonSuggestionsList.appendChild(item);
+                        });
+                    })
+                    .catch(error => {
+                        console.error("Erreur de récupération des saisons :", error);
+                    });
+
+                document.getElementById("seasonContainer").classList.remove("hidden");
+            }
+
+            tvshowNameInput.addEventListener("input", () => {
+                const query = tvshowNameInput.value.trim();
+                clearTimeout(debounceTimeout);
+
+                if (query.length < 2) {
+                    suggestionsList.innerHTML = "";
+                    return;
+                }
+
+                debounceTimeout = setTimeout(() => {
+                    fetch(`/streaming/tvshows/retrieve_by_name/?q=${encodeURIComponent(query)}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error("Erreur réseau");
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            suggestionsList.innerHTML = "";
+                            data.forEach(tvshow => {
+                                const item = document.createElement("li");
+                                item.className = "flex items-center gap-4 p-2 hover:bg-gray-700 cursor-pointer";
+
+                                const img = document.createElement("img");
+                                if (tvshow.poster) {
+                                    img.src = tvshow.poster;
+                                }
+                                else {
+                                    img.src = "/static/poster_placeholder.jpg"
+                                }
+                                img.alt = tvshow.name;
+                                img.className = "w-12 h-auto rounded";
+
+                                const text = document.createElement("span");
+                                text.textContent = tvshow.name + (tvshow.first_air_date ? ` (${tvshow.first_air_date})` : "");
+
+                                item.appendChild(img);
+                                item.appendChild(text);
+
+                                item.addEventListener("click", () => {
+                                    tvshowNameInput.value = tvshow.name;
+                                    document.getElementById("tvshowID").value = tvshow.id;
+                                    suggestionsList.innerHTML = "";
+                                    const tvshowID = tvshow.id;
+                                    setupSeasonChoice(tvshow.tmdb_id);
+                                });
+
+                                suggestionsList.appendChild(item);
+                            });
+                        })
+                        .catch(error => {
+                            console.error("Erreur de récupération des séries :", error);
+                        });
+                });
+            })
+
+            document.addEventListener("click", (e) => {
+                if (!suggestionsList.contains(e.target) && e.target !== tvshowNameInput) {
+                    suggestionsList.innerHTML = "";
+                }
+            });
+
+            document.getElementById("seasonName").addEventListener("focusin", () => {
+                seasonSuggestionsList.classList.remove("hidden");
+            });
+        })
+    </script>
+{% endblock extraheads %}
+
+{% block content %}
+    {{ block.super }}
+
+    <form method="POST" class="w-full p-4 text-lg">
+        {% csrf_token %}
+        <div class="relative w-full">
+            <label for="tvshowName" class="p-2 block">Nom de la série</label>
+            <input type="text" id="tvshowName" name="tvshowName" placeholder="Nom de la série"
+                class="p-2 bg-gray-900 rounded-lg w-full" autocomplete="off" />
+
+            <ul id="tvshowSuggestions"
+                class="absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-50 max-h-64 overflow-y-auto">
+            </ul>
+        </div>
+        <div id="seasonContainer" class="w-full mt-4 hidden">
+            <div class="relative w-full">
+                <label for="seasonName" class="p-2 block">Saison</label>
+                <input type="text" id="seasonName" placeholder="Saison"
+                    class="p-2 bg-gray-900 rounded-lg w-full" autocomplete="off" readonly />
+
+                <ul id="seasonSuggestions"
+                    class="hidden absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-50 max-h-64 overflow-y-auto">
+                </ul>
+            </div>
+        </div>
+        <div id="seasonDataContainer" class="w-full mt-4 hidden">
+            <input type="hidden" id="tvshowID" name="tvshowID" value="" />
+            <input type="hidden" id="seasonNumber" name="seasonNumber" value="" />
+            <input type="hidden" id="seasonNameForm" name="seasonNameForm" value="" />
+
+            <div class="flex justify-center space-x-4">
+                <div class="flex-1 flex justify-center">
+                    <img src="" id="seasonPoster" class="" />
+                    <input type="hidden" id="seasonPosterPath" name="seasonPosterPath" value="" />
+                </div>
+                <div class="flex-1">
+                    <label for="seasonOverview">Résumé</label>
+                    <textarea rows="4" id="seasonOverview" name="seasonOverview" class="w-full bg-gray-900 text-white p-2 rounded-lg"></textarea>
+
+                    <label for="seasonReleaseDate">Date de sortie</label>
+                    <input type="date" id="seasonReleaseDate" name="seasonReleaseDate" class="w-full bg-gray-900 text-white p-2 rounded-lg" />
+                </div>
+            </div>
+            <div class="flex items-center justify-center w-full mt-4">
+                <button type="submit" class="p-2 border border-white rounded-lg w-1/2">Ajouter</button>
+            </div>
+        </div>
+    </form>
+{% endblock content %}

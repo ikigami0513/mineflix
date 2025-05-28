@@ -1,0 +1,232 @@
+{% extends 'dashboard/index.html' %}
+
+{% block title %}Ajouter Épisode{% endblock title %}
+
+{% block extraheads %}
+    {{ block.super }}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const tvshowNameInput = document.getElementById("tvshowName");
+            const suggestionsList = document.getElementById("tvshowSuggestions");
+            const seasonSuggestionsList = document.getElementById("seasonSuggestions");
+            const episodeSuggestionsList = document.getElementById("episodeSuggestions");
+
+            let debounceTimeout = null;
+
+            function setupEpisodeChoice(episodes) {
+                episodes.forEach(episode => {
+                    const item = document.createElement("li");
+                    item.className = "flex items-center gap-4 p-2 hover:bg-gray-700 cursor-pointer";
+
+                    const episodeName = `Épisode ${episode.episode_number} - ${episode.name}`;
+
+                    const thumbnailPath = `https://image.tmdb.org/t/p/w500${episode.still_path}`;
+                    const img = document.createElement("img");
+                    img.src = thumbnailPath;
+                    img.alt = episodeName;
+                    img.className = "w-12 h-auto rounded";
+
+                    const text = document.createElement("span");
+                    text.textContent = episodeName;
+
+                    item.appendChild(img);
+                    item.appendChild(text);
+
+                    item.addEventListener("click", () => {
+                        episodeSuggestionsList.classList.add("hidden");
+                        document.getElementById("episodeName").value = episodeName;
+                        document.getElementById("episodeNumber").value = episode.episode_number;
+                        document.getElementById("episodeNameForm").value = episode.name;
+                        document.getElementById("episodeThumbnail").src = thumbnailPath;
+                        document.getElementById("episodeThumbnailPath").value = thumbnailPath;
+                        document.getElementById("episodeOverview").value = episode.overview;
+                        document.getElementById("episodeReleaseDate").value = episode.air_date;
+
+                        document.getElementById("episodeDataContainer").classList.remove("hidden");
+                    });
+
+                    episodeSuggestionsList.appendChild(item);
+                });
+            }
+
+            function setupSeasonChoice(seasons) {
+                seasonSuggestionsList.innerHTML = "";
+                seasons.forEach(season => {
+                    const item = document.createElement("li");
+                    item.className = "flex items-center gap-4 p-2 hover:bg-gray-700 cursor-pointer";
+
+                    const seasonName = `Saison ${season.season_number}${season.name ? `- ${season.name}` : "" }`;
+
+                    const img = document.createElement("img");
+                    img.src = season.poster;
+                    img.alt = seasonName;
+                    img.className = "w-12 h-auto rounded";
+
+                    const text = document.createElement("span");
+                    text.textContent = seasonName;
+
+                    item.appendChild(img);
+                    item.appendChild(text);
+
+                    item.addEventListener("click", () => {
+                        seasonSuggestionsList.classList.add("hidden");
+                        document.getElementById("seasonName").value = seasonName;
+
+                        document.getElementById("seasonNumber").value = season.season_number;
+
+                        fetch(`/tmdb/tvshows/seasons/${season.id}/episodes/`)
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error("Erreur réseau");
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                episodeSuggestionsList.innerHTML = "";
+                                setupEpisodeChoice(data)
+                            })
+                            .catch(error => {
+                                console.error("Erreur de récupération des épisodes :", error);
+                            });
+                            
+                        document.getElementById("episodeContainer").classList.remove("hidden");
+                    });
+
+                    seasonSuggestionsList.appendChild(item);
+                });
+
+                document.getElementById("seasonContainer").classList.remove("hidden");
+            }
+
+            tvshowNameInput.addEventListener("input", () => {
+                const query = tvshowNameInput.value.trim();
+                clearTimeout(debounceTimeout);
+
+                if (query.length < 2) {
+                    suggestionsList.innerHTML = "";
+                    return;
+                }
+
+                debounceTimeout = setTimeout(() => {
+                    fetch(`/streaming/tvshows/retrieve_by_name/?q=${encodeURIComponent(query)}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error("Erreur réseau");
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            suggestionsList.innerHTML = "";
+                            data.forEach(tvshow => {
+                                const item = document.createElement("li");
+                                item.className = "flex items-center gap-4 p-2 hover:bg-gray-700 cursor-pointer";
+
+                                const img = document.createElement("img");
+                                if (tvshow.poster) {
+                                    img.src = tvshow.poster;
+                                }
+                                else {
+                                    img.src = "/static/poster_placeholder.jpg"
+                                }
+                                img.alt = tvshow.name;
+                                img.className = "w-12 h-auto rounded";
+
+                                const text = document.createElement("span");
+                                text.textContent = tvshow.name + (tvshow.first_air_date ? ` (${tvshow.first_air_date})` : "");
+
+                                item.appendChild(img);
+                                item.appendChild(text);
+
+                                item.addEventListener("click", () => {
+                                    tvshowNameInput.value = tvshow.name;
+                                    document.getElementById("tvshowID").value = tvshow.id;
+                                    suggestionsList.innerHTML = "";
+                                    const tvshowID = tvshow.id;
+                                    setupSeasonChoice(tvshow.seasons);
+                                });
+
+                                suggestionsList.appendChild(item);
+                            });
+                        })
+                        .catch(error => {
+                            console.error("Erreur de récupération des séries :", error);
+                        });
+                });
+            });
+
+            document.getElementById("seasonName").addEventListener("focusin", () => {
+                seasonSuggestionsList.classList.remove("hidden");
+            });
+
+            document.getElementById("episodeName").addEventListener("focusin", () => {
+                episodeSuggestionsList.classList.remove("hidden");
+            })
+        });
+    </script>
+{% endblock extraheads %}
+
+{% block content %}
+    {{ block.super }}
+
+    <form method="POST" enctype="multipart/form-data" class="w-full p-4 text-lg">
+        {% csrf_token %}
+        <div class="relative w-full">
+            <label for="tvshowName" class="p-2 block">Nom de la série</label>
+            <input type="text" id="tvshowName" name="tvshowName" placeholder="Nom de la série"
+                class="p-2 bg-gray-900 rounded-lg w-full" autocomplete="off" />
+
+            <ul id="tvshowSuggestions"
+                class="absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-50 max-h-64 overflow-y-auto">
+            </ul>
+        </div>
+        <div id="seasonContainer" class="w-full mt-4 hidden">
+            <div class="relative w-full">
+                <label for="seasonName" class="p-2 block">Saison</label>
+                <input type="text" id="seasonName" placeholder="Saison"
+                    class="p-2 bg-gray-900 rounded-lg w-full" autocomplete="off" readonly />
+
+                <ul id="seasonSuggestions"
+                    class="hidden absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-50 max-h-64 overflow-y-auto">
+                </ul>
+            </div>
+        </div>
+        <div id="episodeContainer" class="w-full mt-4 hidden">
+            <div class="relative w-full">
+                <label for="episodeName" class="p-2 block">Épisode</label>
+                <input type="text" id="episodeName" placeholder="Épisode"
+                    class="p-2 bg-gray-900 rounded-lg w-full" autocomplete="off" readonly />
+
+                <ul id="episodeSuggestions"
+                    class="hidden absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-50 max-h-64 overflow-y-auto">
+                </ul>
+            </div>
+        </div>
+        <div id="episodeDataContainer" class="w-full mt-4 hidden">
+            <input type="hidden" id="tvshowID" name="tvshowID" value="" />
+            <input type="hidden" id="seasonNumber" name="seasonNumber" value="" />
+            <input type="hidden" id="episodeNumber" name="episodeNumber" value="" />
+            <input type="hidden" id="episodeNameForm" name="episodeNameForm" value="" />
+        
+            <div class="flex justify-center space-x-4">
+                <div class="flex-1 flex justify-center">
+                    <img src="" id="episodeThumbnail" class="" />
+                    <input type="hidden" id="episodeThumbnailPath" name="episodeThumbnailPath" value="" />
+                </div>
+                <div class="flex-1">
+                    <label for="episodeOverview">Résumé</label>
+                    <textarea rows="4" id="episodeOverview" name="episodeOverview" class="w-full bg-gray-900 text-white p-2 rounded-lg"></textarea>
+
+                    <label for="episodeReleaseDate">Date de sortie</label>
+                    <input type="date" id="episodeReleaseDate" name="episodeReleaseDate" class="w-full bg-gray-900 text-white p-2 rounded-lg" />
+                
+                    <label for="episodeVideo">Vidéo</label>
+                    <input type="file" id="episodeVideo" name="episodeVideo" class="w-full bg-gray-900 text-white p-2 rounded-lg" />
+                </div>
+            </div>
+            <div class="flex items-center justify-center w-full mt-4">
+                <button type="submit" class="p-2 border border-white rounded-lg w-1/2">Ajouter</button>
+            </div>
+        </div>
+    </form>
+{% endblock content %}
