@@ -7,6 +7,7 @@ from django.views import View
 from django.http import HttpRequest, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+from django.contrib import messages
 from .decorators import superuser_required
 from streaming.models import Movie, TVShow, Season, Episode
 
@@ -60,7 +61,7 @@ class AddMovieFromDashboardView(View):
             movie.video = video_file
 
         movie.save()
-
+        messages.success(request, f"Le film {movie.title} a bien été ajouté.")
         return redirect("add_movie_dashboard_view")
     
 
@@ -91,6 +92,7 @@ class AddTVShowFromDashboardView(View):
             tvshow.poster.save(filename, image_file, save=True)
 
         tvshow.save()
+        messages.success(request, f"La série {tvshow.name} a bien été ajoutée.")
         return redirect("add_tvshow_dashboard_view")
     
 
@@ -130,6 +132,10 @@ class AddSeasonFromDashboardView(View):
             season.poster.save(filename, image_file, save=True)
 
         season.save()
+        if season.name:
+            messages.success(request, f"La saison {season.season_number} ({season.name}) de {season.tv_show.name} a bien été ajoutée.")
+        else:
+            messages.success(request, f"La saison {season.season_number} de {season.tv_show.name} a bien été ajoutée.")
         return redirect("add_season_dashboard_view")
 
 
@@ -166,5 +172,5 @@ class AddEpisodeFromDashboardView(View):
             episode.video = video_file
 
         episode.save()
-
+        messages.success(request, f"L'épisode {episode.episode_number} saison {episode.season.season_number} de {episode.season.tv_show.name} a bien été ajouté.")
         return redirect("add_episode_dashboard_view")

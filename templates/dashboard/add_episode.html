@@ -169,7 +169,7 @@
 {% block content %}
     {{ block.super }}
 
-    <form method="POST" enctype="multipart/form-data" class="w-full p-4 text-lg">
+    <form method="POST" enctype="multipart/form-data" class="w-full p-4 text-lg mt-32">
         {% csrf_token %}
         <div class="relative w-full">
             <label for="tvshowName" class="p-2 block">Nom de la série</label>
@@ -177,7 +177,7 @@
                 class="p-2 bg-gray-900 rounded-lg w-full" autocomplete="off" />
 
             <ul id="tvshowSuggestions"
-                class="absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-50 max-h-64 overflow-y-auto">
+                class="absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-30 max-h-64 overflow-y-auto">
             </ul>
         </div>
         <div id="seasonContainer" class="w-full mt-4 hidden">
@@ -187,7 +187,7 @@
                     class="p-2 bg-gray-900 rounded-lg w-full" autocomplete="off" readonly />
 
                 <ul id="seasonSuggestions"
-                    class="hidden absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-50 max-h-64 overflow-y-auto">
+                    class="hidden absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-30 max-h-64 overflow-y-auto">
                 </ul>
             </div>
         </div>
@@ -198,7 +198,7 @@
                     class="p-2 bg-gray-900 rounded-lg w-full" autocomplete="off" readonly />
 
                 <ul id="episodeSuggestions"
-                    class="hidden absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-50 max-h-64 overflow-y-auto">
+                    class="hidden absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-30 max-h-64 overflow-y-auto">
                 </ul>
             </div>
         </div>
@@ -208,14 +208,14 @@
             <input type="hidden" id="episodeNumber" name="episodeNumber" value="" />
             <input type="hidden" id="episodeNameForm" name="episodeNameForm" value="" />
         
-            <div class="flex justify-center space-x-4">
+            <div class="block md:flex justify-center md:space-x-4">
                 <div class="flex-1 flex justify-center">
                     <img src="" id="episodeThumbnail" class="" />
                     <input type="hidden" id="episodeThumbnailPath" name="episodeThumbnailPath" value="" />
                 </div>
-                <div class="flex-1">
+                <div class="flex-1 mt-4 md:mt-0">
                     <label for="episodeOverview">Résumé</label>
-                    <textarea rows="4" id="episodeOverview" name="episodeOverview" class="w-full bg-gray-900 text-white p-2 rounded-lg"></textarea>
+                    <textarea rows="8" id="episodeOverview" name="episodeOverview" class="w-full bg-gray-900 text-white p-2 rounded-lg"></textarea>
 
                     <label for="episodeReleaseDate">Date de sortie</label>
                     <input type="date" id="episodeReleaseDate" name="episodeReleaseDate" class="w-full bg-gray-900 text-white p-2 rounded-lg" />

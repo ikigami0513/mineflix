@@ -30,7 +30,7 @@ class MovieListView(View):
         else:
             movies = Movie.objects.all().order_by('title')
 
-        paginator = Paginator(movies, 30)
+        paginator = Paginator(movies, 18)
         page = request.GET.get('page')
 
         try:
@@ -92,7 +92,7 @@ class TVShowListView(View):
         else:
             tvshows = TVShow.objects.all().order_by('name')
 
-        paginator = Paginator(tvshows, 30)
+        paginator = Paginator(tvshows, 18)
         page = request.GET.get('page')
 
         try:

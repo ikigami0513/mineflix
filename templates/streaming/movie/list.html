@@ -16,11 +16,11 @@
 
 {% block content %}
     <!-- Movie Sections -->
-    <section class="pt-8 px-6 mt-12">
+    <section class="pt-8 px-6 my-12">
         <form method="GET">
             <div class="flex gap-2 my-4">
                 <input type="text" id="query" name="query" placeholder="Rechercher" class="p-2 bg-gray-900 rounded-lg w-full" {% if query %}value="{{ query }}"{% endif %} autocomplete="off" />
-                <button class="p-2 bg-gray-900 rounded-lg" type="submit">
+                <button class="p-2 bg-gray-900 rounded-lg px-4" type="submit">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
             </div>
@@ -34,6 +34,37 @@
             {% endfor %}
         </div>
     </section>
+
+    {% if movies.has_other_pages %}
+        <div class="flex justify-center items-center my-8">
+            <nav class="inline-flex gap-1" aria-label="Pagination">
+                {% if movies.has_previous %}
+                    <a href="?{% if query %}query={{ query }}&{% endif %}page={{ movies.previous_page_number }}" class="px-3 py-2 rounded-md bg-gray-800 hover:bg-gray-700">
+                        &laquo;
+                    </a>
+                {% else %}
+                    <span class="px-3 py-2 rounded-md bg-gray-700 text-gray-500 cursor-not-allowed">&laquo;</span>
+                {% endif %}
+
+                {% for num in movies.paginator.page_range %}
+                    {% if num == movies.number %}
+                        <span class="px-3 py-2 rounded-lg border border-white">{{ num }}</span>
+                    {% elif num > movies.number|add:'-3' and num < movies.number|add:'3' %}
+                        <a href="?{% if query %}query={{ query }}&{% endif %}page={{ num }}" class="px-3 py-2 rounded-md bg-gray-800 hover:bg-gray-700">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if movies.has_next %}
+                    <a href="?{% if query %}query={{ query }}&{% endif %}page={{ movies.next_page_number }}" class="px-3 py-2 rounded-md bg-gray-800 hover:bg-gray-700">
+                        &raquo;
+                    </a>
+                {% else %}
+                    <span class="px-3 py-2 rounded-md bg-gray-700 text-gray-500 cursor-not-allowed">&raquo;</span>
+                {% endif %}
+            </nav>
+        </div>
+    {% endif %}
+
 
     {% include "widgets/movie_modal.html" %}
 {% endblock content %}

@@ -137,9 +137,7 @@
 {% endblock extraheads %}
 
 {% block content %}
-    {{ block.super }}
-
-    <form method="POST" enctype="multipart/form-data" class="w-full p-4 text-lg">
+    <form method="POST" enctype="multipart/form-data" class="w-full mt-32 p-4 text-lg">
         {% csrf_token %}
         <div class="relative w-full">
             <input type="hidden" id="tmdbID" name="tmdbID" />
@@ -148,19 +146,19 @@
                    class="p-2 bg-gray-900 rounded-lg w-full" autocomplete="off" />
 
             <ul id="movieSuggestions"
-                class="absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-50 max-h-64 overflow-y-auto">
+                class="absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-30 max-h-64 overflow-y-auto">
             </ul>
         </div>
 
         <div id="movieContainer" class="w-full mt-4 hidden">
-            <div class="flex justify-center space-x-4">
+            <div class="block md:flex justify-center md:space-x-4">
                 <div class="flex-1 flex items-center justify-center">
                     <img src="" id="moviePoster" class="" />
                     <input type="hidden" id="moviePosterPath" name="moviePosterPath" value="" />
                 </div>
-                <div class="flex-1">
+                <div class="flex-1 mt-4 md:mt-0">
                     <label for="movieOverview">Résumé</label>
-                    <textarea rows="4" id="movieOverview" name="movieOverview" class="w-full bg-gray-900 text-white p-2 rounded-lg"></textarea>
+                    <textarea rows="8" id="movieOverview" name="movieOverview" class="w-full bg-gray-900 text-white p-2 rounded-lg"></textarea>
 
                     <label for="movieReleaseDate">Date de sortie</label>
                     <input type="date" id="movieReleaseDate" name="movieReleaseDate" class="w-full bg-gray-900 text-white p-2 rounded-lg" />
@@ -171,13 +169,13 @@
             </div>
             <div class="w-full" id="movieThumbnailContainer">
                 <label for="movieThumbnail" class="p-2 block">Miniature</label>
-                <div class="flex w-full justify-center items-center space-x-4 h-96">
+                <div class="flex flex-col md:flex-row w-full justify-center items-center space-x-4 h-96">
                     <img src="" id="movieThumbnail" class="h-full object-contain rounded" />
 
                     <input type="hidden" value="" id="movieSelectedThumbnail" name="movieSelectedThumbnail" />
 
                     <ul id="movieThumbnails"
-                        class="h-full overflow-y-auto bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-50 space-y-2 p-2">
+                        class="h-full overflow-y-auto bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-30 space-y-2 p-2">
                     </ul>
                 </div>
             </div>

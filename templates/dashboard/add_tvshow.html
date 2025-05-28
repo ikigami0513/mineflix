@@ -99,7 +99,7 @@
 {% block content %}
     {{ block.super }}
 
-    <form method="POST" class="w-full p-4 text-lg">
+    <form method="POST" class="w-full p-4 text-lg mt-32">
         {% csrf_token %}
         <div class="relative w-full">
             <input type="hidden" id="tmdbID" name="tmdbID" />
@@ -108,19 +108,19 @@
                 class="p-2 bg-gray-900 rounded-lg w-full" autocomplete="off" />
 
             <ul id="tvshowSuggestions"
-                class="absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-50 max-h-64 overflow-y-auto">
+                class="absolute top-full left-0 right-0 bg-gray-800 border border-gray-600 rounded-md mt-1 text-white z-30 max-h-64 overflow-y-auto">
             </ul>
         </div>
 
         <div id="tvshowContainer" class="w-full mt-4 hidden">
-            <div class="flex justify-center space-x-4">
+            <div class="block md:flex justify-center md:space-x-4">
                 <div class="flex-1 flex items-center justify-center">
                     <img src="" id="tvshowPoster" class="" />
                     <input type="hidden" id="tvshowPosterPath" name="tvshowPosterPath" value="" />
                 </div>
-                <div class="flex-1">
+                <div class="flex-1 mt-4 md:mt-0">
                     <label for="tvshowOverview">Résumé</label>
-                    <textarea rows="4" id="tvshowOverview" name="tvshowOverview" class="w-full bg-gray-900 text-white p-2 rounded-lg"></textarea>
+                    <textarea rows="8" id="tvshowOverview" name="tvshowOverview" class="w-full bg-gray-900 text-white p-2 rounded-lg"></textarea>
 
                     <label for="tvshowReleaseDate">Date de sortie initiale</label>
                     <input type="date" id="tvshowReleaseDate" name="tvshowReleaseDate" class="w-full bg-gray-900 text-white p-2 rounded-lg" /> 
