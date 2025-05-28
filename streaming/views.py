@@ -24,7 +24,12 @@ class MovieDetailView(APIView):
 class MovieListView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest) -> HttpResponse:
-        movies = Movie.objects.all().order_by('title')
+        query = request.GET.get("query")
+        if query:
+            movies = Movie.objects.filter(title__icontains=query)
+        else:
+            movies = Movie.objects.all().order_by('title')
+
         paginator = Paginator(movies, 30)
         page = request.GET.get('page')
 
@@ -36,7 +41,8 @@ class MovieListView(View):
             movies_page = paginator.page(paginator.num_pages)
 
         return render(request, "streaming/movie/list.html", {
-            "movies": movies_page
+            "movies": movies_page,
+            "query": query
         })
     
 
@@ -77,11 +83,16 @@ class SeasonDetailView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
-class SeasonListView(View):
+class TVShowListView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest) -> HttpResponse:
-        tv_shows = TVShow.objects.all().order_by('name')
-        paginator = Paginator(tv_shows, 30)
+        query = request.GET.get("query")
+        if query:
+            tvshows = TVShow.objects.filter(name__icontains=query)
+        else:
+            tvshows = TVShow.objects.all().order_by('name')
+
+        paginator = Paginator(tvshows, 30)
         page = request.GET.get('page')
 
         try:
@@ -92,7 +103,8 @@ class SeasonListView(View):
             tvshows_page = paginator.page(paginator.num_pages)
 
         return render(request, "streaming/tvshow/list.html", {
-            "tvshows": tvshows_page
+            "tvshows": tvshows_page,
+            "query": query
         })
     
 

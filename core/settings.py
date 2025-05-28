@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'tmdb',
     'users',
     'rest_framework',
+    'fontawesomefree',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

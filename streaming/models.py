@@ -103,6 +103,7 @@ class Episode(models.Model):
 
     class Meta:
         unique_together = ('season', 'episode_number')
+        ordering = ['season__tv_show__name', 'season__season_number', 'episode_number']
 
     def save(self, *args, **kwargs) -> None:
         if self.video and not self.credits_time:
